@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Black Friday Finoptim — Tableau de bord</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1115;color:#f5f1ea;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;padding:3vh 3vw}
+header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #e8702a;padding-bottom:2vh;gap:2vw}
+h1{font-size:4vw;font-weight:800;letter-spacing:-.02em}
+h1 span{color:#e8702a}
+.status{font-size:1.8vw;opacity:.75;white-space:nowrap}
+.dot{display:inline-block;width:1.2vw;height:1.2vw;border-radius:50%;background:#4caf50;margin-right:.6vw;vertical-align:middle}
+.offline .dot,.stale .dot{background:#888}
+.grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:3vw;margin-top:4vh}
+.card{background:#181b22;border:1px solid #262a33;border-radius:1.5vw;padding:4vh 3vw;display:flex;flex-direction:column;justify-content:center}
+.card.accent{border-color:#e8702a}
+.label{font-size:2vw;text-transform:uppercase;letter-spacing:.08em;opacity:.8;margin-bottom:2vh}
+.value{font-size:12vw;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:#fff}
+.card.accent .value{color:#ff9a4d}
+.value small{font-size:4vw;opacity:.55;font-weight:700;margin-left:.6vw}
+.bar{height:2.4vh;background:#262a33;border-radius:1vw;margin-top:3vh;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e8702a,#ffb37a);transition:width .8s ease;border-radius:1vw}
+.sub{font-size:1.6vw;opacity:.6;margin-top:2.5vh;line-height:1.35}
+.bump{animation:bump .6s ease}
+@keyframes bump{50%{transform:scale(1.06)}}
+footer{font-size:1.5vw;opacity:.5;margin-top:3vh;display:flex;justify-content:space-between;gap:2vw}
+@media (max-width:900px){h1{font-size:7vw}.grid{grid-template-columns:1fr}.value{font-size:22vw}.value small{font-size:8vw}.label{font-size:3.5vw}.sub{font-size:3vw}.status{font-size:3.5vw}footer{font-size:3vw}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Black <span>Friday</span> · Finoptim</h1>
+  <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion…</span></div>
+</header>
+
+<main class="grid">
+  <section class="card accent">
+    <div class="label">Inserts vendus</div>
+    <div class="value"><span id="inserts">0</span><small>/ <span id="objectif">76</span></small></div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="sub" id="restant">Objectif global Black Friday</div>
+  </section>
+  <section class="card">
+    <div class="label">CA commandé</div>
+    <div class="value"><span id="ca">0</span><small>€</small></div>
+    <div class="sub">Inserts et accessoires gagnés ou signés en BF26</div>
+  </section>
+  <section class="card">
+    <div class="label">Accessoires vendus</div>
+    <div class="value" id="accessoires">0</div>
+    <div class="sub">Opportunités gagnées BF26, hors inserts</div>
+  </section>
+  <section class="card">
+    <div class="label">Devis en cours</div>
+    <div class="value" id="devis">0</div>
+    <div class="sub">Opportunités BF26 en traitement</div>
+  </section>
+  <section class="card">
+    <div class="label">Restant pour l'objectif</div>
+    <div class="value" id="reste">76</div>
+    <div class="sub">Inserts à vendre pour atteindre l'objectif</div>
+  </section>
+  <section class="card">
+    <div class="label">Mise à jour</div>
+    <div class="value" id="heure" style="font-size:8vw">—</div>
+    <div class="sub">Actualisé toutes les 15 min, la page se recharge toutes les minutes</div>
+  </section>
+</main>
+
+<footer>
+  <span id="upd">En attente de données</span>
+  <span>Finoptim</span>
+</footer>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var shown = {};
+  var DATA_URL = 'data/kpi.json';
+  var STALE_MIN = 40;
+
+  function fmt(n) { return Number(n || 0).toLocaleString('fr-FR'); }
+
+  function show(id, v, text) {
+    var n = Number(v) || 0;
+    var el = $(id);
+    if (shown[id] === n && text == null) return;
+    shown[id] = n;
+    el.textContent = text != null ? text : fmt(n);
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+  }
+
+  function setStatus(text, cls) {
+    $('statusText').textContent = text;
+    $('status').className = 'status ' + (cls || '');
+  }
+
+  function render(d) {
+    var objectif = Number(d.objectif_inserts) || 76;
+    var inserts = Number(d.inserts) || 0;
+    var reste = Math.max(objectif - inserts, 0);
+
+    show('inserts', inserts);
+    $('objectif').textContent = fmt(objectif);
+    $('bar').style.width = Math.min(100, (inserts / objectif) * 100) + '%';
+    $('restant').textContent = reste > 0 ? fmt(reste) + ' inserts restants' : 'Objectif atteint';
+    show('reste', reste);
+    show('ca', d.ca_commande);
+    show('accessoires', d.accessoires);
+    show('devis', d.devis_en_cours);
+
+    var dt = d.updated_at ? new Date(d.updated_at) : null;
+    if (dt) {
+      $('heure').textContent = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      $('upd').textContent = 'Dernière mise à jour : ' + dt.toLocaleString('fr-FR');
+      var ageMin = (Date.now() - dt.getTime()) / 60000;
+      if (ageMin > STALE_MIN) setStatus('Chiffres anciens', 'stale');
+      else setStatus('En direct', '');
+    } else {
+      setStatus('En direct', '');
+    }
+  }
+
+  function load() {
+    fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(render)
+      .catch(function () { setStatus('Connexion perdue, nouvel essai…', 'offline'); });
+  }
+
+  load();
+  setInterval(load, 60 * 1000);
+})();
+</script>
+</body>
+</html>

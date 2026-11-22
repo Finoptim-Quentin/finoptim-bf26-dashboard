@@ -1,0 +1,41 @@
+name: Mise à jour tableau de bord BF26
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kpi-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Lire Odoo et écrire data/kpi.json
+        env:
+          ODOO_API_KEY: ${{ secrets.ODOO_API_KEY }}
+          ODOO_URL: https://finoptim.odoo.com
+        run: python scripts/update_kpi.py
+
+      - name: Publier si les chiffres ont changé
+        run: |
+          git config user.name "kpi-bot"
+          git config user.email "kpi-bot@users.noreply.github.com"
+          git add data/kpi.json
+          if git diff --cached --quiet; then
+            echo "Aucun changement"
+          else
+            git commit -m "Mise à jour des chiffres BF26"
+            git push
+          fi
