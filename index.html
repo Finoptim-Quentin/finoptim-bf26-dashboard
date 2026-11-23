@@ -6,14 +6,19 @@
 <title>Black Friday Finoptim — Tableau de bord</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#0f1115;color:#f5f1ea;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;flex-direction:column;padding:3vh 3vw}
+html{background:#0f1115;height:100%}
+body{background:#0f1115;color:#f5f1ea;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100%;height:100%;display:flex;flex-direction:column;padding:3vh 3vw;overflow-x:hidden}
+.tools{display:flex;align-items:center;gap:1.5vw}
+.btn{font-size:1.6vw;font-weight:700;color:#f5f1ea;background:#262a33;border:1px solid #3a3f4b;border-radius:.8vw;padding:1vh 1.4vw;cursor:pointer}
+.btn:hover,.btn:focus{background:#e8702a;border-color:#e8702a;outline:none}
+.btn:disabled{opacity:.5;cursor:default}
 header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #e8702a;padding-bottom:2vh;gap:2vw}
 h1{font-size:4vw;font-weight:800;letter-spacing:-.02em}
 h1 span{color:#e8702a}
 .status{font-size:1.8vw;opacity:.75;white-space:nowrap}
 .dot{display:inline-block;width:1.2vw;height:1.2vw;border-radius:50%;background:#4caf50;margin-right:.6vw;vertical-align:middle}
 .offline .dot,.stale .dot{background:#888}
-.grid{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:3vw;margin-top:4vh}
+.grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:3vw;margin-top:4vh}
 .card{background:#181b22;border:1px solid #262a33;border-radius:1.5vw;padding:4vh 3vw;display:flex;flex-direction:column;justify-content:center}
 .card.accent{border-color:#e8702a}
 .label{font-size:2vw;text-transform:uppercase;letter-spacing:.08em;opacity:.8;margin-bottom:2vh}
@@ -32,7 +37,11 @@ footer{font-size:1.5vw;opacity:.5;margin-top:3vh;display:flex;justify-content:sp
 <body>
 <header>
   <h1>Black <span>Friday</span> · Finoptim</h1>
-  <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion…</span></div>
+  <div class="tools">
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion…</span></div>
+    <button class="btn" id="refresh" type="button">Rafraîchir</button>
+    <button class="btn" id="fs" type="button">Plein écran</button>
+  </div>
 </header>
 
 <main class="grid">
@@ -131,6 +140,25 @@ footer{font-size:1.5vw;opacity:.5;margin-top:3vh;display:flex;justify-content:sp
       .then(render)
       .catch(function () { setStatus('Connexion perdue, nouvel essai…', 'offline'); });
   }
+
+  $('refresh').addEventListener('click', function () {
+    var b = $('refresh');
+    b.disabled = true;
+    setStatus('Actualisation…', '');
+    load();
+    setTimeout(function () { b.disabled = false; }, 1500);
+  });
+
+  $('fs').addEventListener('click', function () {
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen;
+    var exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (req) req.call(el);
+    } else if (exit) {
+      exit.call(document);
+    }
+  });
 
   load();
   setInterval(load, 60 * 1000);
