@@ -21,13 +21,13 @@ h1 span{color:#e8702a}
 .grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:min(3vw,4vh);margin-top:min(4vh,6vw)}
 .card{background:#181b22;border:1px solid #262a33;border-radius:1.5vw;padding:min(4vh,5vw) min(3vw,4vh);display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:0;overflow:hidden}
 .card.accent{border-color:#e8702a}
-.label{font-size:min(2vw,3vh);text-transform:uppercase;letter-spacing:.08em;opacity:.8;margin-bottom:min(2vh,3vw)}
-.value{font-size:min(9vw,17vh);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:#fff;white-space:nowrap}
+.label{font-size:min(1.6vw,2.6vh);text-transform:uppercase;letter-spacing:.08em;opacity:.8;margin-bottom:min(2vh,3vw)}
+.value{font-size:min(6.2vw,11vh);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:#fff;white-space:nowrap}
 .card.accent .value{color:#ff9a4d}
-.value small{font-size:min(4vw,6vh);opacity:.55;font-weight:700;margin-left:.6vw}
+.value small{font-size:min(3vw,4.5vh);opacity:.55;font-weight:700;margin-left:.6vw}
 .bar{height:min(2.4vh,3vw);background:#262a33;border-radius:1vw;margin-top:min(3vh,4vw);overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#e8702a,#ffb37a);transition:width .8s ease;border-radius:1vw}
-.sub{font-size:min(1.6vw,2.6vh);opacity:.6;margin-top:min(2.5vh,3vw);line-height:1.35}
+.sub{font-size:min(1.3vw,2.2vh);opacity:.6;margin-top:min(2.5vh,3vw);line-height:1.35}
 .bump{animation:bump .6s ease}
 @keyframes bump{50%{transform:scale(1.06)}}
 footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:flex;justify-content:space-between;gap:2vw}
@@ -40,6 +40,8 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
   <div class="tools">
     <div class="status" id="status"><span class="dot"></span><span id="statusText">Connexion…</span></div>
     <button class="btn" id="refresh" type="button">Rafraîchir</button>
+    <button class="btn" id="zm" type="button" title="Réduire">A−</button>
+    <button class="btn" id="zp" type="button" title="Agrandir">A+</button>
     <button class="btn" id="fs" type="button">Plein écran</button>
   </div>
 </header>
@@ -73,7 +75,7 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
   </section>
   <section class="card">
     <div class="label">Mise à jour</div>
-    <div class="value" id="heure" style="font-size:min(7vw,12vh)">—</div>
+    <div class="value" id="heure" style="font-size:min(5vw,9vh)">—</div>
     <div class="sub">Actualisé toutes les 15 min, la page se recharge toutes les minutes</div>
   </section>
 </main>
@@ -159,6 +161,20 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
       exit.call(document);
     }
   });
+
+  var ZKEY = 'bf26-zoom';
+  var zoom = 1;
+  try { zoom = parseFloat(localStorage.getItem(ZKEY)) || 1; } catch (e) {}
+
+  function applyZoom(z) {
+    zoom = Math.min(1.5, Math.max(0.5, Math.round(z * 100) / 100));
+    document.documentElement.style.zoom = zoom;
+    try { localStorage.setItem(ZKEY, zoom); } catch (e) {}
+  }
+  applyZoom(zoom);
+
+  $('zm').addEventListener('click', function () { applyZoom(zoom - 0.1); });
+  $('zp').addEventListener('click', function () { applyZoom(zoom + 0.1); });
 
   load();
   setInterval(load, 60 * 1000);
