@@ -1,8 +1,8 @@
 {
-  "inserts": 32,
+  "inserts": 34,
   "accessoires": 14,
-  "ca_commande": 65627,
-  "devis_en_cours": 35,
+  "ca_commande": 69233,
+  "devis_en_cours": 33,
   "objectif_inserts": 76,
-  "updated_at": "2026-11-24T13:30:54Z"
+  "updated_at": "2026-11-24T13:45:37Z"
 }
