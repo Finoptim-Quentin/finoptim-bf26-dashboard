@@ -30,6 +30,8 @@ h1 span{color:#e8702a}
 .sub{font-size:min(1.3vw,2.2vh);opacity:.6;margin-top:min(2.5vh,3vw);line-height:1.35}
 .bump{animation:bump .6s ease}
 @keyframes bump{50%{transform:scale(1.06)}}
+.card.win{animation:win 1s ease-in-out 4;border-color:#ffb37a}
+@keyframes win{50%{box-shadow:0 0 0 .4vw #ffb37a,0 0 6vw rgba(232,112,42,.7)}}
 footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:flex;justify-content:space-between;gap:2vw}
 @media (max-width:900px){h1{font-size:7vw}.grid{grid-template-columns:1fr}.value{font-size:22vw}.value small{font-size:8vw}.label{font-size:3.5vw}.sub{font-size:3vw}.status{font-size:3.5vw}footer{font-size:3vw}}
 </style>
@@ -42,6 +44,7 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     <button class="btn" id="refresh" type="button">Rafraîchir</button>
     <button class="btn" id="zm" type="button" title="Réduire">A−</button>
     <button class="btn" id="zp" type="button" title="Agrandir">A+</button>
+    <button class="btn" id="snd" type="button" title="Son de victoire à chaque insert vendu">Son</button>
     <button class="btn" id="fs" type="button">Plein écran</button>
   </div>
 </header>
@@ -110,11 +113,96 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     $('status').className = 'status ' + (cls || '');
   }
 
+  // ---- Son de victoire (synthétisé, sans fichier externe) ----
+  var SKEY = 'bf26-sound';
+  var LKEY = 'bf26-last-inserts';
+  var soundOn = true;
+  try { soundOn = localStorage.getItem(SKEY) !== 'off'; } catch (e) {}
+  var audioCtx = null;
+
+  function getCtx() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+
+  function unlockAudio() {
+    var c = getCtx();
+    if (c && c.state === 'suspended') c.resume();
+  }
+
+  function tone(ctx, freq, start, dur, vol) {
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start(start);
+    o.stop(start + dur + 0.05);
+  }
+
+  function playVictory() {
+    var ctx = getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    var t = ctx.currentTime + 0.05;
+    // Fanfare : arpège montant puis accord final
+    [[523.25, 0], [659.25, 0.13], [783.99, 0.26], [1046.5, 0.39]].forEach(function (s) {
+      tone(ctx, s[0], t + s[1], 0.18, 0.12);
+    });
+    [523.25, 659.25, 783.99, 1046.5].forEach(function (f) {
+      tone(ctx, f, t + 0.55, 1.0, 0.07);
+    });
+  }
+
+  function celebrate() {
+    var card = document.querySelector('.card.accent');
+    if (!card) return;
+    card.classList.remove('win');
+    void card.offsetWidth;
+    card.classList.add('win');
+    setTimeout(function () { card.classList.remove('win'); }, 4500);
+  }
+
+  // Joue la fanfare quand le nombre d'inserts augmente (la première lecture ne joue rien)
+  function checkWin(n) {
+    var prev = null;
+    try { prev = localStorage.getItem(LKEY); } catch (e) {}
+    if (prev !== null && n > Number(prev)) {
+      celebrate();
+      if (soundOn) playVictory();
+    }
+    try { localStorage.setItem(LKEY, String(n)); } catch (e) {}
+  }
+
+  function updateSoundButton() {
+    $('snd').textContent = soundOn ? 'Son : activé' : 'Son : coupé';
+  }
+
+  $('snd').addEventListener('click', function () {
+    soundOn = !soundOn;
+    try { localStorage.setItem(SKEY, soundOn ? 'on' : 'off'); } catch (e) {}
+    updateSoundButton();
+    if (soundOn) { unlockAudio(); playVictory(); }
+  });
+
+  // Le navigateur exige un clic avant de jouer du son : le premier clic sur la page débloque l'audio
+  document.addEventListener('pointerdown', unlockAudio, { once: true });
+  updateSoundButton();
+
   function render(d) {
     var objectif = Number(d.objectif_inserts) || 76;
     var inserts = Number(d.inserts) || 0;
     var reste = Math.max(objectif - inserts, 0);
 
+    checkWin(inserts);
     show('inserts', inserts);
     $('objectif').textContent = fmt(objectif);
     $('bar').style.width = Math.min(100, (inserts / objectif) * 100) + '%';
