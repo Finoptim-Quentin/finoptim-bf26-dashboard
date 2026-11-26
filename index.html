@@ -134,10 +134,10 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     if (c && c.state === 'suspended') c.resume();
   }
 
-  function tone(ctx, freq, start, dur, vol) {
+  function tone(ctx, freq, start, dur, vol, type) {
     var o = ctx.createOscillator();
     var g = ctx.createGain();
-    o.type = 'square';
+    o.type = type || 'square';
     o.frequency.value = freq;
     g.gain.setValueAtTime(0.0001, start);
     g.gain.exponentialRampToValueAtTime(vol, start + 0.02);
@@ -153,12 +153,23 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     if (!ctx) return;
     if (ctx.state === 'suspended') ctx.resume();
     var t = ctx.currentTime + 0.05;
-    // Fanfare : arpège montant puis accord final
-    [[523.25, 0], [659.25, 0.13], [783.99, 0.26], [1046.5, 0.39]].forEach(function (s) {
-      tone(ctx, s[0], t + s[1], 0.18, 0.12);
+    // Fanfare festive : petites notes rapides et rebondissantes, puis un « ta-da » et des étincelles
+    var riff = [[523.25, 0], [659.25, 0.09], [783.99, 0.18], [1046.5, 0.27],
+                [783.99, 0.36], [880, 0.42], [1046.5, 0.48], [1318.5, 0.56]];
+    riff.forEach(function (s) {
+      tone(ctx, s[0], t + s[1], 0.1, 0.1, 'square');
     });
-    [523.25, 659.25, 783.99, 1046.5].forEach(function (f) {
-      tone(ctx, f, t + 0.55, 1.0, 0.07);
+    // Basse qui rebondit en accompagnement
+    [261.63, 329.63, 392, 261.63].forEach(function (f, i) {
+      tone(ctx, f, t + i * 0.18, 0.16, 0.12, 'triangle');
+    });
+    // Ta-da final
+    [1046.5, 1318.5, 1568].forEach(function (f) {
+      tone(ctx, f, t + 0.72, 0.9, 0.07, 'square');
+    });
+    // Étincelles aiguës
+    [2093, 2637, 3136].forEach(function (f, i) {
+      tone(ctx, f, t + 0.8 + i * 0.07, 0.12, 0.04, 'triangle');
     });
   }
 
