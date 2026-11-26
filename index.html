@@ -173,7 +173,17 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     });
   }
 
-  // La Marseillaise (air du domaine public), jouée à chaque clic sur Rafraîchir
+  // La Marseillaise (air du domaine public), jouée toutes les 15 min, calée sur :00 :15 :30 :45
+  function scheduleMarseillaise() {
+    var now = new Date();
+    var ms = (15 - (now.getMinutes() % 15)) * 60000 - now.getSeconds() * 1000 - now.getMilliseconds();
+    if (ms <= 0) ms += 15 * 60000;
+    setTimeout(function () {
+      if (soundOn) playMarseillaise();
+      scheduleMarseillaise();
+    }, ms);
+  }
+
   function playMarseillaise() {
     var ctx = getCtx();
     if (!ctx) return;
@@ -268,7 +278,6 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
   $('refresh').addEventListener('click', function () {
     var b = $('refresh');
     b.disabled = true;
-    if (soundOn) playMarseillaise();
     setStatus('Actualisation…', '');
     load();
     setTimeout(function () { b.disabled = false; }, 1500);
@@ -301,6 +310,7 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
 
   load();
   setInterval(load, 60 * 1000);
+  scheduleMarseillaise();
 })();
 </script>
 </body>
