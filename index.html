@@ -173,6 +173,29 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     });
   }
 
+  // La Marseillaise (air du domaine public), jouée à chaque clic sur Rafraîchir
+  function playMarseillaise() {
+    var ctx = getCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    var beat = 0.42;
+    var t = ctx.currentTime + 0.05;
+    var melody = [[261.63, 1], [261.63, 1], [261.63, 1], [349.23, 2],
+                  [440, 1], [440, 1], [392, 1], [349.23, 1],
+                  [392, 1], [440, 1], [392, 1], [349.23, 1], [523.25, 3]];
+    var at = 0;
+    melody.forEach(function (n) {
+      tone(ctx, n[0], t + at * beat, n[1] * beat * 0.9, 0.12, 'square');
+      at += n[1];
+    });
+    var bass = [[130.81, 4], [174.61, 4], [196, 4], [130.81, 4]];
+    at = 0;
+    bass.forEach(function (b) {
+      tone(ctx, b[0], t + at * beat, b[1] * beat * 0.9, 0.1, 'triangle');
+      at += b[1];
+    });
+  }
+
   function celebrate() {
     var card = document.querySelector('.card.accent');
     if (!card) return;
@@ -245,6 +268,7 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
   $('refresh').addEventListener('click', function () {
     var b = $('refresh');
     b.disabled = true;
+    if (soundOn) playMarseillaise();
     setStatus('Actualisation…', '');
     load();
     setTimeout(function () { b.disabled = false; }, 1500);
