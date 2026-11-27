@@ -77,9 +77,9 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     <div class="sub">Inserts à vendre pour atteindre l'objectif</div>
   </section>
   <section class="card">
-    <div class="label">Mise à jour</div>
-    <div class="value" id="heure" style="font-size:min(5vw,9vh)">—</div>
-    <div class="sub">Actualisé toutes les 15 min, la page se recharge toutes les minutes</div>
+    <div class="label">Primes</div>
+    <div class="value"><span id="primes">0,00</span><small>€</small></div>
+    <div class="sub">CA commandé × 0,5 %</div>
   </section>
 </main>
 
@@ -255,10 +255,11 @@ footer{font-size:min(1.5vw,2.4vh);opacity:.5;margin-top:min(3vh,4vw);display:fle
     show('ca', d.ca_commande);
     show('accessoires', d.accessoires);
     show('devis', d.devis_en_cours);
+    var primes = (Number(d.ca_commande) || 0) * 0.005;
+    $('primes').textContent = primes.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     var dt = d.updated_at ? new Date(d.updated_at) : null;
     if (dt) {
-      $('heure').textContent = dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       $('upd').textContent = 'Dernière mise à jour : ' + dt.toLocaleString('fr-FR');
       var ageMin = (Date.now() - dt.getTime()) / 60000;
       if (ageMin > STALE_MIN) setStatus('Chiffres anciens', 'stale');
